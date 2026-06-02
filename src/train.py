@@ -171,12 +171,12 @@ src/train.py
 
 ```text
 recommender-system/
-├── api/serve.py
-├── app.py
-├── models/results.json
-├── requirements.txt
-├── src/features.py
-└── src/train.py
+|-- api/serve.py
+|-- app.py
+|-- models/results.json
+|-- requirements.txt
+|-- src/features.py
+`-- src/train.py
 ```
 
 ## How to Run

@@ -10,7 +10,7 @@ from api.serve import recommend_for_user
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "models" / "results.json"
 
-st.set_page_config(page_title="MovieLens Recommender", page_icon="🎬", layout="wide")
+st.set_page_config(page_title="MovieLens Recommender", layout="wide")
 st.title("MovieLens Recommender System")
 st.caption("SVD collaborative filtering recommendations from MovieLens 100K.")
 
