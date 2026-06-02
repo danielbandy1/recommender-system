@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+data/raw/ml-100k.zip
+data/raw/ml-100k/

@@ -1,0 +1,32 @@
+{
+  "dataset": {
+    "name": "MovieLens 100K",
+    "ratings": 100000,
+    "users": 943,
+    "items": 1682,
+    "train_ratings": 80000,
+    "test_ratings": 20000,
+    "split": "80/20 stratified by rating",
+    "random_state": 42
+  },
+  "models": {
+    "svd": {
+      "rmse": 0.935,
+      "mae": 0.7365,
+      "n_factors": 50
+    },
+    "user_based_cf": {
+      "rmse": 0.9359,
+      "mae": 0.7318,
+      "k_neighbors": 30
+    }
+  },
+  "artifacts": {
+    "prediction_matrix": "models/prediction_matrix.npy",
+    "seen_mask": "models/seen_mask.npy",
+    "user_similarity": "models/user_similarity.npy",
+    "svd_components": "models/svd_components.npz",
+    "movie_lookup": "models/movie_lookup.csv"
+  },
+  "generated_at": "2026-06-02T01:42:23.463100+00:00"
+}

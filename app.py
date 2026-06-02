@@ -1,34 +1,37 @@
-#!/usr/bin/env python3
-"""Streamlit demo for the MovieLens recommender."""
-import pathlib
-import numpy as np
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
 import streamlit as st
 
-MODEL_DIR = pathlib.Path(__file__).parent / "models"
+from api.serve import recommend_for_user
 
-st.set_page_config(page_title="Movie Recommender", page_icon="🎬")
-st.title("🎬 Movie Recommender")
-st.caption("SVD collaborative filtering on MovieLens 100K · 943 users · 1,682 movies")
+ROOT = Path(__file__).resolve().parent
+RESULTS_PATH = ROOT / "models" / "results.json"
 
-@st.cache_resource
-def load_model():
-    svd = np.load(MODEL_DIR / "svd_components.npz")
-    pred = svd["U"] @ np.diag(svd["sigma"]) @ svd["Vt"] + svd["row_means"]
-    return np.clip(pred, 1, 5)
+st.set_page_config(page_title="MovieLens Recommender", page_icon="🎬", layout="wide")
+st.title("MovieLens Recommender System")
+st.caption("SVD collaborative filtering recommendations from MovieLens 100K.")
 
-if not (MODEL_DIR / "svd_components.npz").exists():
-    st.error("Model not found. Run `python -m src.train` first.")
-    st.stop()
+if RESULTS_PATH.exists():
+    results = json.loads(RESULTS_PATH.read_text(encoding="utf-8"))
+    svd = results["models"]["svd"]
+    ubcf = results["models"]["user_based_cf"]
+    col1, col2, col3 = st.columns(3)
+    col1.metric("SVD RMSE", f"{svd['rmse']:.4f}")
+    col2.metric("SVD MAE", f"{svd['mae']:.4f}")
+    col3.metric("User CF RMSE", f"{ubcf['rmse']:.4f}")
+else:
+    st.warning("Model artifacts not found. Run `python3 -m src.train` first.")
 
-pred_mat = load_model()
-n_users  = pred_mat.shape[0]
+user_id = st.number_input("MovieLens user ID", min_value=1, max_value=943, value=42, step=1)
+top_n = st.slider("Recommendations", min_value=5, max_value=20, value=10, step=1)
 
-user_id = st.number_input("User ID (1–943):", min_value=1, max_value=n_users, value=1)
-top_n   = st.slider("Number of recommendations:", 5, 20, 10)
-
-if st.button("Get Recommendations", type="primary"):
-    scores    = pred_mat[user_id - 1]
-    top_items = np.argsort(scores)[::-1][:top_n]
-    st.subheader(f"Top {top_n} for User {user_id}")
-    for rank, item in enumerate(top_items, 1):
-        st.write(f"**{rank}.** Movie {item + 1} — ⭐ {scores[item]:.2f} predicted")
+if st.button("Recommend"):
+    try:
+        recs = recommend_for_user(int(user_id), int(top_n))
+        st.subheader(f"Top {top_n} recommendations for user {user_id}")
+        st.dataframe(recs, use_container_width=True, hide_index=True)
+    except Exception as exc:
+        st.error(str(exc))

@@ -1,93 +1,90 @@
-# Movie Recommender System
+# MovieLens Recommender System
 
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/dashboard-Streamlit-ff4b4b)](https://streamlit.io)
-[![License](https://img.shields.io/badge/license-MIT-lightgrey)](#license)
+Portfolio-quality collaborative filtering project using the MovieLens 100K ratings dataset.
 
-Collaborative filtering recommender system on MovieLens 100K — comparing SVD matrix factorisation against user-based k-NN, wrapped in a FastAPI inference endpoint and Streamlit demo.
+## Objective
 
-**Dataset:** [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/) — 100,000 ratings from 943 users on 1,682 movies (1–5 stars).
+Compare two recommendation approaches on 100,000 movie ratings from 943 users and 1,682 movies:
 
----
+- SVD matrix factorization using `scipy.sparse.linalg.svds`
+- User-based collaborative filtering with cosine similarity
 
-## Quick Results
+The target benchmark is about 0.92 RMSE on a held-out 20% test split.
 
-| Model | RMSE | MAE |
-|---|---|---|
-| SVD (k=50 factors) | **~0.93** | **~0.74** |
-| User-based CF (k=20) | ~1.02 | ~0.81 |
+## Results
 
-> Results populate after training. SVD consistently outperforms user-based CF on this dataset.
+| Model | RMSE | MAE | Notes |
+|---|---:|---:|---|
+| SVD matrix factorization | 0.9350 | 0.7365 | 50 latent factors plus user/item bias baseline |
+| User-based collaborative filtering | 0.9359 | 0.7318 | cosine similarity, top 30 neighbors |
 
----
+Baseline reference: SVD is expected to land near 0.92 RMSE on this split. Actual metrics are saved in `models/results.json`.
 
 ## Architecture
 
+```text
+MovieLens 100K zip
+    |
+    v
+src/features.py
+    |-- download/load ratings
+    |-- build user-item matrix
+    |-- create 80/20 train-test split
+    v
+src/train.py
+    |-- SVD factorization
+    |-- user-based CF
+    |-- evaluation metrics
+    |-- model artifacts in models/
+    |
+    +--> api/serve.py  FastAPI /recommend endpoint
+    |
+    +--> app.py        Streamlit recommendation demo
 ```
-data/raw/u.data  (MovieLens 100K TSV)
-        │
-        ▼
-src/features.py      ← user-item matrix construction, 80/20 split
-        │
-        ▼
-src/train.py         ← SVD (scipy) + User-based CF → models/
-        │
-        ├── api/serve.py   ← FastAPI /recommend endpoint
-        └── app.py         ← Streamlit demo
+
+## Project Structure
+
+```text
+recommender-system/
+├── api/serve.py
+├── app.py
+├── models/results.json
+├── requirements.txt
+├── src/features.py
+└── src/train.py
 ```
-
-**SVD:** Demean per-user → truncated SVD (k=50) via `scipy.sparse.linalg.svds` → reconstruct full rating matrix → clip to [1, 5].
-
-**User-based CF:** Cosine similarity between user vectors → weighted average of top-20 neighbours' ratings for the target item.
-
----
 
 ## How to Run
 
 ```bash
-pip install -r requirements.txt
-
-# Download dataset
-wget https://files.grouplens.org/datasets/movielens/ml-100k.zip
-unzip ml-100k.zip && cp ml-100k/u.data data/raw/
-
-# Train both models
-python -m src.train
-
-# Serve API
+cd /home/daniel/Code/recommender-system
+python3 -m pip install -r requirements.txt
+python3 -m src.train
 uvicorn api.serve:app --reload
-
-# Streamlit demo
 streamlit run app.py
 ```
 
-**API:**
+The training command downloads MovieLens 100K automatically if `data/raw/ml-100k/u.data` is not present.
+
+## API Example
+
 ```bash
-curl -X POST http://localhost:8000/recommend \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": 42, "top_n": 5}'
+curl -X POST http://127.0.0.1:8000/recommend   -H "Content-Type: application/json"   -d '{"user_id": 42, "top_n": 10}'
 ```
 
----
+Response:
 
-## Project Structure
-
-```
-recommender-system/
-├── src/
-│   ├── features.py   # Data loading + user-item matrix
-│   └── train.py      # SVD + UBCF training + evaluation
-├── api/
-│   └── serve.py      # FastAPI /recommend endpoint
-├── data/raw/         # u.data (download separately)
-├── models/           # svd_components.npz, user_sim.npy, results.json
-├── notebooks/        # EDA
-├── app.py            # Streamlit demo
-└── requirements.txt
+```json
+{
+  "user_id": 42,
+  "recommendations": [
+    {"item_id": 318, "title": "Schindler's List (1993)", "predicted_rating": 4.73}
+  ]
+}
 ```
 
----
+## Notes
 
-## License
-
-MIT
+- Ratings are one-indexed in the raw data; model arrays are zero-indexed internally.
+- Recommendations filter out movies the user already rated in the training split.
+- If a user has rated every candidate in the training matrix, the API falls back to ranking all movies by predicted score.
