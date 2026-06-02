@@ -28,5 +28,5 @@
     "svd_components": "models/svd_components.npz",
     "movie_lookup": "models/movie_lookup.csv"
   },
-  "generated_at": "2026-06-02T01:42:23.463100+00:00"
+  "generated_at": "2026-06-02T01:52:22.645909+00:00"
 }
