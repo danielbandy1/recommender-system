@@ -1,6 +1,12 @@
 # MovieLens Recommender System
 
-Portfolio-quality collaborative filtering project using the MovieLens 100K ratings dataset.
+[![SVD RMSE](https://img.shields.io/badge/SVD%20RMSE-0.935-blue)](#results)
+[![UBCF RMSE](https://img.shields.io/badge/UBCF%20RMSE-0.936-green)](#results)
+[![API](https://img.shields.io/badge/API-FastAPI-009688)](#api-example)
+
+Portfolio-quality collaborative filtering project comparing SVD matrix factorization and user-based cosine similarity on the MovieLens 100K ratings dataset, with saved artifacts, FastAPI recommendations, and a Streamlit demo.
+
+**Result callout:** SVD reaches **RMSE 0.9350** and **MAE 0.7365** on an 80/20 held-out split; user-based collaborative filtering lands at **RMSE 0.9359**.
 
 ## Objective
 
